@@ -63,7 +63,25 @@ struct AuthHttpContext {
     introspect_config: IntrospectConfig,
 }
 
-impl AuthHttpContext {}
+impl AuthHttpContext {
+    fn introspect_token(&mut self, token: &str) -> Result<u32, Status> {
+        let body = vec![("token", token)];
+        let encoded_body = serde_urlencoded::to_string(body).unwrap();
+
+        return self.dispatch_http_call(
+            self.introspect_config.upstream.as_str(),
+            vec![
+                (":method", "POST"),
+                (":path", self.introspect_config.path.as_str()),
+                (":authority", self.introspect_config.authority.as_str()),
+                (":content-type", "application/x-www-form-urlencoded"),
+            ],
+            Option::Some(encoded_body.into_bytes().as_slice()),
+            vec![],
+            Duration::from_millis(200),
+        );
+    }
+}
 
 impl Context for AuthHttpContext {}
 
