@@ -6,4 +6,4 @@ format:
 
 .PHONY: build
 build:
-	cargo +nightly build --target=wasm32-unknown-unknown --release
+	cargo +nightly build --target=wasm32-wasi --release
