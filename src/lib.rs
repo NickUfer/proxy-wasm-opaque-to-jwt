@@ -11,7 +11,7 @@ mod jwt;
 
 #[no_mangle]
 pub fn _start() {
-    proxy_wasm::set_log_level(LogLevel::Trace); // FIXME
+    proxy_wasm::set_log_level(LogLevel::Trace); // TODO make configurable
     proxy_wasm::set_root_context(|_| -> Box<dyn RootContext> {
         Box::new(AuthRootContext {
             jwt_header_name: String::new(),

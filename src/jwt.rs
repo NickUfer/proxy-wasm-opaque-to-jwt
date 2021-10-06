@@ -119,6 +119,8 @@ pub mod jwt_producer {
     }
 
     fn convert_value_to_claims(value: Value) -> JWTClaims<NoCustomClaims> {
+        // TODO add custom claims and all standard claims
+        // FIXME add check if claims even exist
         let mut audiences = HashSet::new();
         for audience in value.get("aud").unwrap().as_array().unwrap() {
             audiences.insert(String::from(audience.as_str().unwrap()));
