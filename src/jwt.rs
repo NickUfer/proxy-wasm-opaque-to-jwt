@@ -119,29 +119,41 @@ pub mod jwt_producer {
     }
 
     fn convert_value_to_claims(value: Value) -> JWTClaims<NoCustomClaims> {
-        // TODO add custom claims and all standard claims
-        // FIXME add check if claims even exist
-        let mut audiences = HashSet::new();
-        for audience in value.get("aud").unwrap().as_array().unwrap() {
-            audiences.insert(String::from(audience.as_str().unwrap()));
+        let mut claims = Claims::create(Duration::from_secs(0));
+
+        if let Some(issued_at) = value.get("iat") {
+            claims.issued_at = Option::Some(UnixTimeStamp::from_secs(
+                issued_at.as_u64().unwrap(),
+            ));
         }
-        return JWTClaims {
-            issued_at: Option::Some(UnixTimeStamp::from_secs(
-                value.get("iat").unwrap().as_u64().unwrap(),
-            )),
-            expires_at: Option::Some(UnixTimeStamp::from_secs(
-                value.get("exp").unwrap().as_u64().unwrap(),
-            )),
-            invalid_before: Option::Some(UnixTimeStamp::from_secs(
-                value.get("nbf").unwrap().as_u64().unwrap(),
-            )),
-            audiences: Option::Some(AsSet(audiences)),
-            issuer: Option::Some(String::from(value.get("iss").unwrap().as_str().unwrap())),
-            jwt_id: None,
-            subject: Option::Some(String::from(value.get("sub").unwrap().as_str().unwrap())),
-            nonce: None,
-            custom: NoCustomClaims {},
-        };
+        if let Some(expires_at) = value.get("exp") {
+            claims.expires_at = Option::Some(UnixTimeStamp::from_secs(
+                expires_at.as_u64().unwrap(),
+            ));
+        }
+        if let Some(not_valid_before) = value.get("nbf") {
+            claims.invalid_before = Option::Some(UnixTimeStamp::from_secs(
+                not_valid_before.as_u64().unwrap(),
+            ));
+        }
+        if let Some(issuer) = value.get("iss") {
+            claims.issuer = Option::Some(String::from(issuer.as_str().unwrap()));
+        }
+        if let Some(audience_value) = value.get("aud") {
+            let mut audiences = HashSet::new();
+            for audience in audience_value.as_array().unwrap() {
+                audiences.insert(String::from(audience.as_str().unwrap()));
+            }
+            claims.audiences = Option::Some(AsSet(audiences));
+        }
+        if let Some(jti) = value.get("jti") {
+            claims.jwt_id = Option::Some(String::from(jti.as_str().unwrap()));
+        }
+        if let Some(sub) = value.get("sub") {
+            claims.subject = Option::Some(String::from(sub.as_str().unwrap()));
+        }
+
+        return claims;
     }
 
     // The MIT License (MIT)
