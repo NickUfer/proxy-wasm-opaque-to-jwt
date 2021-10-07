@@ -121,14 +121,17 @@ pub mod jwt_producer {
     fn convert_value_to_claims(value: Value) -> JWTClaims<NoCustomClaims> {
         let mut claims = Claims::create(Duration::from_secs(0));
 
-        if let Some(issued_at) = value.get("iat") {
-            claims.issued_at = Option::Some(UnixTimeStamp::from_secs(
-                issued_at.as_u64().unwrap(),
-            ));
-        }
         if let Some(expires_at) = value.get("exp") {
             claims.expires_at = Option::Some(UnixTimeStamp::from_secs(
                 expires_at.as_u64().unwrap(),
+            ));
+        } else {
+            // Set expires_at to 1970 when in any way there is no 'exp'.
+            claims.expires_at = Option::Some(UnixTimeStamp::from_secs(0))
+        }
+        if let Some(issued_at) = value.get("iat") {
+            claims.issued_at = Option::Some(UnixTimeStamp::from_secs(
+                issued_at.as_u64().unwrap(),
             ));
         }
         if let Some(not_valid_before) = value.get("nbf") {
