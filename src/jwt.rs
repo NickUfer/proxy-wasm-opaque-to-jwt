@@ -21,10 +21,10 @@ pub mod jwt_producer {
 
         pub fn from(algorithm: Algorithm, key: String) -> JwtProducer {
             let key_pair: Box<dyn Encoder> = match algorithm {
-                Algorithm::RS256 => Box::new(RS256KeyPair::from_pem(key.as_str()).unwrap()),
                 Algorithm::HS256 => Box::new(HS256Key::from_bytes(key.as_bytes())),
                 Algorithm::HS384 => Box::new(HS384Key::from_bytes(key.as_bytes())),
                 Algorithm::HS512 => Box::new(HS512Key::from_bytes(key.as_bytes())),
+                Algorithm::RS256 => Box::new(RS256KeyPair::from_pem(key.as_str()).unwrap()),
                 Algorithm::RS384 => Box::new(RS384KeyPair::from_pem(key.as_str()).unwrap()),
                 Algorithm::RS512 => Box::new(RS512KeyPair::from_pem(key.as_str()).unwrap()),
                 Algorithm::PS256 => Box::new(PS256KeyPair::from_pem(key.as_str()).unwrap()),
