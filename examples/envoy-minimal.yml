@@ -70,7 +70,6 @@ static_resources:
       connect_timeout: 15.0s # Should be way less than 50ms in prod.
       type: STRICT_DNS
       lb_policy: round_robin
-      http2_protocol_options: {}
       load_assignment:
         cluster_name: oauth2-authorization-serve
         endpoints:
@@ -81,6 +80,7 @@ static_resources:
                       address: id.example.com
                       port_value: 80 # or 443
 #      If your introspect endpoint is HTTPS only (which it should be)
+#      http2_protocol_options: {}
 #      transport_socket:
 #        name: envoy.transport_sockets.tls
 #        typed_config:
