@@ -63,4 +63,4 @@ These claims are included in the JWT if provided:
 |`sub`|:heavy_check_mark:|
 
 
-Note: Claims are planned to be completely customizable with [Jsonnet](https://jsonnet.org/).
+Note: Claims are planned to be completely customizable with [Jsonnet](https://jsonnet.org/), even custom claims provided by the introspection endpoint.
