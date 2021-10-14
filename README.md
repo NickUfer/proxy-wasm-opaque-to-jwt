@@ -4,6 +4,14 @@ This is a http proxy filter which converts opaque authorization tokens to signed
 containing claims provided by an OAuth2 token introspection endpoint.
 RFC: [OAuth 2.0 Token Introspection](https://datatracker.ietf.org/doc/html/rfc7662)
 
+## Build From Source
+
+Run make in the project root:
+```shell
+make build
+```
+The built wasm file should be located at `target/wasm32-wasi/release/proxy_wasm_opaque_to_jwt.wasm`.
+
 ## Configuration
 
 An example configuration of the filter.
