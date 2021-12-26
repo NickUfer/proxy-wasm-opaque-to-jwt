@@ -38,10 +38,7 @@ static_resources:
                               path: "/oauth2/introspect"
                               upstream: "oauth2-authorization-serve"
                             jwt:
-                              key: |-
-                                -----BEGIN PRIVATE KEY-----
-                                MC4CAQAwBQYDK2VwBCIEIKFLhOYO7szSDiGMXNkrNm/n2ofWEGrNNb2l+12id/wf
-                                -----END PRIVATE KEY-----
+                              key: 'Generate new key with command "openssl genpkey -algorithm ed25519"'
                               output_header_name: "X-JWT-User"
                               algorithm: "EdDSA"
                               jsonnet_template: |-

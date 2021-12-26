@@ -22,10 +22,7 @@ introspect_endpoint:
   path: "/oauth2/introspect" # Introspection endpoint path
   upstream: "oauth2-authorization-serve" # Under e.g. Envoy Proxy the name of the cluster which provides the endpoint
 jwt:
-  key: |- # Key to use for jwt signing
-    -----BEGIN PRIVATE KEY-----
-    MC4CAQAwBQYDK2VwBCIEIKFLhOYO7szSDiGMXNkrNm/n2ofWEGrNNb2l+12id/wf
-    -----END PRIVATE KEY-----
+  key: '' # Key to use for jwt signing. Generate new key with command "openssl genpkey -algorithm ed25519"
   output_header_name: "X-JWT-User" # Header name to store the JWT in. This header is appended to the incoming request available for upstream services
   algorithm: "EdDSA" # Algorithm to use for jwt signing
   jsonnet_template: |- # Jsonnet function to use for transforming the introspection data to jwt claims
