@@ -11,7 +11,6 @@ use std::str::FromStr;
 use std::string::FromUtf8Error;
 use std::time::Duration;
 
-mod jsonnet;
 mod jwt;
 
 #[no_mangle]
