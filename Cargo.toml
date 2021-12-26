@@ -1,6 +1,6 @@
 [package]
 name = "proxy-wasm-opaque-to-jwt"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Nick Ufer <nick@ufer.dev>"]
 edition = "2018"
 
