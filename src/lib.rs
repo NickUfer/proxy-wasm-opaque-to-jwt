@@ -2,6 +2,7 @@ use crate::jwt::jwt_producer::{Algorithm, AnyCustomClaims, JwtProducer};
 use jrsonnet_evaluator::error::LocError;
 use jrsonnet_evaluator::Val;
 use jwt_simple::claims::JWTClaims;
+use jwt_simple::Error;
 use proxy_wasm::hostcalls::log;
 use proxy_wasm::traits::*;
 use proxy_wasm::types::*;
@@ -167,10 +168,19 @@ impl Context for AuthHttpContext {
                     }
                 };
 
-                self.add_http_request_header(
-                    self.jwt_header_name.as_str(),
-                    self.jwt_producer.encode_jwt(jwt_claims).as_str(),
-                );
+                let jwt = match self.jwt_producer.encode_jwt(jwt_claims) {
+                    Ok(jwt) => jwt,
+                    Err(e) => {
+                        log(
+                            LogLevel::Error,
+                            format!("Could not sign jwt token: {:?}", e).as_str(),
+                        );
+                        self.resume_http_request();
+                        return;
+                    }
+                };
+
+                self.add_http_request_header(self.jwt_header_name.as_str(), jwt.as_str());
                 self.resume_http_request();
             }
         }

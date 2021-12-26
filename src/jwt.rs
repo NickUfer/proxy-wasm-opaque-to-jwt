@@ -4,6 +4,7 @@ pub mod jwt_producer {
     use jrsonnet_evaluator::EvaluationState;
     use jwt_simple::algorithms::*;
     use jwt_simple::prelude::*;
+    use jwt_simple::Error;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
     use std::collections::HashMap;
@@ -65,13 +66,13 @@ pub mod jwt_producer {
                 })
         }
 
-        pub fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+        pub fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
             self.key_pair.as_ref().unwrap().encode_jwt(claims)
         }
     }
 
     pub trait Encoder: DynClone {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String;
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error>;
     }
 
     dyn_clone::clone_trait_object!(Encoder);
@@ -80,68 +81,68 @@ pub mod jwt_producer {
     struct NoopEncoder {}
 
     impl Encoder for NoopEncoder {
-        fn encode_jwt(&self, _: JWTClaims<AnyCustomClaims>) -> String {
-            String::from("NoopEncoder") // FIXME error
+        fn encode_jwt(&self, _: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return unimplemented!("NoopEncoder is not usable");
         }
     }
 
     impl Encoder for RS512KeyPair {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.sign(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.sign(claims);
         }
     }
 
     impl Encoder for RS384KeyPair {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.sign(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.sign(claims);
         }
     }
 
     impl Encoder for RS256KeyPair {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.sign(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.sign(claims);
         }
     }
 
     impl Encoder for PS512KeyPair {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.sign(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.sign(claims);
         }
     }
 
     impl Encoder for PS384KeyPair {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.sign(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.sign(claims);
         }
     }
 
     impl Encoder for PS256KeyPair {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.sign(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.sign(claims);
         }
     }
 
     impl Encoder for HS256Key {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.authenticate(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.authenticate(claims);
         }
     }
 
     impl Encoder for HS384Key {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.authenticate(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.authenticate(claims);
         }
     }
 
     impl Encoder for HS512Key {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.authenticate(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.authenticate(claims);
         }
     }
 
     impl Encoder for Ed25519KeyPair {
-        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
-            return self.sign(claims).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
+            return self.sign(claims);
         }
     }
 
