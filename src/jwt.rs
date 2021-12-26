@@ -1,25 +1,36 @@
 pub mod jwt_producer {
     use dyn_clone::DynClone;
+    use jrsonnet_evaluator::error::LocError;
+    use jrsonnet_evaluator::EvaluationState;
     use jwt_simple::algorithms::*;
-    use jwt_simple::claims::Audiences::AsSet;
     use jwt_simple::prelude::*;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
+    use std::collections::HashMap;
+    use std::path::PathBuf;
     use std::str::FromStr;
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct AnyCustomClaims {
+        #[serde(flatten)]
+        custom_claims: HashMap<String, Value>,
+    }
 
     #[derive(Clone)]
     pub struct JwtProducer {
+        jsonnet_template: String,
         key_pair: Option<Box<dyn Encoder>>,
     }
 
     impl JwtProducer {
         pub fn noop() -> JwtProducer {
             JwtProducer {
+                jsonnet_template: String::from("{error: \"noop implementation\"}"),
                 key_pair: Option::Some(Box::new(NoopEncoder {})),
             }
         }
 
-        pub fn from(algorithm: Algorithm, key: String) -> JwtProducer {
+        pub fn from(algorithm: Algorithm, key: String, jsonnet_template: String) -> JwtProducer {
             let key_pair: Box<dyn Encoder> = match algorithm {
                 Algorithm::HS256 => Box::new(HS256Key::from_bytes(key.as_bytes())),
                 Algorithm::HS384 => Box::new(HS384Key::from_bytes(key.as_bytes())),
@@ -33,18 +44,34 @@ pub mod jwt_producer {
                 Algorithm::EdDSA => Box::new(Ed25519KeyPair::from_pem(key.as_str()).unwrap()),
                 _ => Box::new(NoopEncoder {}),
             };
+
             return JwtProducer {
+                jsonnet_template,
                 key_pair: Option::Some(key_pair),
             };
         }
 
-        pub fn encode_jwt(&self, claims: Value) -> String {
+        pub fn render_jsonnet(&self, json_input: String) -> Result<String, LocError> {
+            let vm = EvaluationState::default().with_stdlib().to_owned();
+            vm.add_tla_code("introspect_json".into(), json_input.into())
+                .and_then(|_| {
+                    vm.with_stdlib()
+                        .evaluate_snippet_raw(
+                            PathBuf::from("introspect_transform.jsonnet").into(),
+                            self.jsonnet_template.as_str().into(),
+                        )
+                        .and_then(|v| vm.with_tla(v))
+                        .and_then(|v| vm.manifest(v).map(|t| t.to_string()))
+                })
+        }
+
+        pub fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
             self.key_pair.as_ref().unwrap().encode_jwt(claims)
         }
     }
 
     pub trait Encoder: DynClone {
-        fn encode_jwt(&self, claims: Value) -> String; // TODO refactor to return Result
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String;
     }
 
     dyn_clone::clone_trait_object!(Encoder);
@@ -53,110 +80,69 @@ pub mod jwt_producer {
     struct NoopEncoder {}
 
     impl Encoder for NoopEncoder {
-        fn encode_jwt(&self, _: Value) -> String {
+        fn encode_jwt(&self, _: JWTClaims<AnyCustomClaims>) -> String {
             String::from("NoopEncoder") // FIXME error
         }
     }
 
     impl Encoder for RS512KeyPair {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.sign(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.sign(claims).unwrap();
         }
     }
 
     impl Encoder for RS384KeyPair {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.sign(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.sign(claims).unwrap();
         }
     }
 
     impl Encoder for RS256KeyPair {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.sign(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.sign(claims).unwrap();
         }
     }
 
     impl Encoder for PS512KeyPair {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.sign(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.sign(claims).unwrap();
         }
     }
 
     impl Encoder for PS384KeyPair {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.sign(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.sign(claims).unwrap();
         }
     }
 
     impl Encoder for PS256KeyPair {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.sign(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.sign(claims).unwrap();
         }
     }
 
     impl Encoder for HS256Key {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.authenticate(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.authenticate(claims).unwrap();
         }
     }
 
     impl Encoder for HS384Key {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.authenticate(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.authenticate(claims).unwrap();
         }
     }
 
     impl Encoder for HS512Key {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.authenticate(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.authenticate(claims).unwrap();
         }
     }
 
     impl Encoder for Ed25519KeyPair {
-        fn encode_jwt(&self, claims: Value) -> String {
-            return self.sign(convert_value_to_claims(claims)).unwrap();
+        fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> String {
+            return self.sign(claims).unwrap();
         }
-    }
-
-    fn convert_value_to_claims(value: Value) -> JWTClaims<NoCustomClaims> {
-        let mut claims = Claims::create(Duration::from_secs(0));
-
-        if let Some(expires_at) = value.get("exp") {
-            claims.expires_at = Option::Some(UnixTimeStamp::from_secs(
-                expires_at.as_u64().unwrap(),
-            ));
-        } else {
-            // Set expires_at to 1970 when in any way there is no 'exp'.
-            claims.expires_at = Option::Some(UnixTimeStamp::from_secs(0))
-        }
-        if let Some(issued_at) = value.get("iat") {
-            claims.issued_at = Option::Some(UnixTimeStamp::from_secs(
-                issued_at.as_u64().unwrap(),
-            ));
-        }
-        if let Some(not_valid_before) = value.get("nbf") {
-            claims.invalid_before = Option::Some(UnixTimeStamp::from_secs(
-                not_valid_before.as_u64().unwrap(),
-            ));
-        }
-        if let Some(issuer) = value.get("iss") {
-            claims.issuer = Option::Some(String::from(issuer.as_str().unwrap()));
-        }
-        if let Some(audience_value) = value.get("aud") {
-            let mut audiences = HashSet::new();
-            for audience in audience_value.as_array().unwrap() {
-                audiences.insert(String::from(audience.as_str().unwrap()));
-            }
-            claims.audiences = Option::Some(AsSet(audiences));
-        }
-        if let Some(jti) = value.get("jti") {
-            claims.jwt_id = Option::Some(String::from(jti.as_str().unwrap()));
-        }
-        if let Some(sub) = value.get("sub") {
-            claims.subject = Option::Some(String::from(sub.as_str().unwrap()));
-        }
-
-        return claims;
     }
 
     // The MIT License (MIT)
