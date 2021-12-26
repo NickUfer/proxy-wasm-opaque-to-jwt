@@ -8,8 +8,21 @@ pub mod jwt_producer {
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
     use std::collections::HashMap;
+    use std::fmt::{Display, Formatter};
+    use std::io::ErrorKind;
     use std::path::PathBuf;
     use std::str::FromStr;
+
+    #[derive(Debug)]
+    pub struct KeyPairNotSetError {}
+
+    impl Display for KeyPairNotSetError {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "Could not get key pair reference. Key Pair is not set")
+        }
+    }
+
+    impl std::error::Error for KeyPairNotSetError {}
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct AnyCustomClaims {
@@ -67,7 +80,12 @@ pub mod jwt_producer {
         }
 
         pub fn encode_jwt(&self, claims: JWTClaims<AnyCustomClaims>) -> Result<String, Error> {
-            self.key_pair.as_ref().unwrap().encode_jwt(claims)
+            match self.key_pair.as_ref() {
+                None => {
+                    return Err(Error::new(KeyPairNotSetError {}));
+                }
+                Some(key_pair_ref) => key_pair_ref.encode_jwt(claims),
+            }
         }
     }
 
