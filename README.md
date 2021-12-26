@@ -16,19 +16,30 @@ The built wasm file should be located at `target/wasm32-wasi/release/proxy_wasm_
 
 An example configuration of the filter.
 
-```json5
-{
-  "introspect_endpoint": {
-    "authority": "id.example.com", // Hostname of the endpoint
-    "path": "/oauth2/introspect", // Introspection endpoint path
-    "upstream": "oauth2-authorization-server" // Under e.g. Envoy Proxy the name of the cluster which provides the endpoint
-  },
-  "jwt": {
-    "key": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIKFLhOYO7szSDiGMXNkrNm/n2ofWEGrNNb2l+12id/wf\n-----END PRIVATE KEY-----", // Key to use for jwt signing
-    "output_header_name": "X-JWT-User", // Header name to store the JWT in. This header is appended to the incoming request available for upstream services
-    "algorithm": "EdDSA" // Algorithm to use for jwt signing
-  }
-}
+```yaml
+introspect_endpoint:
+  authority: "id.example.com" # Hostname of the endpoint
+  path: "/oauth2/introspect" # Introspection endpoint path
+  upstream: "oauth2-authorization-serve" # Under e.g. Envoy Proxy the name of the cluster which provides the endpoint
+jwt:
+  key: |- # Key to use for jwt signing
+    -----BEGIN PRIVATE KEY-----
+    MC4CAQAwBQYDK2VwBCIEIKFLhOYO7szSDiGMXNkrNm/n2ofWEGrNNb2l+12id/wf
+    -----END PRIVATE KEY-----
+  output_header_name: "X-JWT-User" # Header name to store the JWT in. This header is appended to the incoming request available for upstream services
+  algorithm: "EdDSA" # Algorithm to use for jwt signing
+  jsonnet_template: |- # Jsonnet function to use for transforming the introspection data to jwt claims
+    function(introspect_json) {
+      // If expiration is not set, set it to 0 to make it invalid
+      exp: if(std.objectHas(introspect_json, "exp")) then introspect_json.exp else 0,
+      iat: if(std.objectHas(introspect_json, "iat")) then introspect_json.iat,
+      nbf: if(std.objectHas(introspect_json, "nbf")) then introspect_json.nbf,
+      iss: if(std.objectHas(introspect_json, "iss")) then introspect_json.iss,
+      // If supplied aud is not an array convert it to one with 1 element.
+      aud: if(std.objectHas(introspect_json, "aud")) then (if(std.isArray(introspect_json.aud)) then introspect_json.aud else [introspect_json.aud]),
+      jti: if(std.objectHas(introspect_json, "jti")) then introspect_json.jti,
+      sub: if(std.objectHas(introspect_json, "sub")) then introspect_json.sub
+    }
 ```
 
 A full example envoy v3 config can be found in [examples/envoy-minimal.yml](examples/envoy-minimal.yml).
@@ -55,9 +66,9 @@ A full example envoy v3 config can be found in [examples/envoy-minimal.yml](exam
 |EdDSA|
 |`EdDSA`|:heavy_check_mark:|
 
-#### Supported JWT claims
+#### JWT claims
 
-These claims are included in the JWT if provided:
+These claims are included in the JWT by default if provided:
 
 |Claim|Supported|
 |---|---|
@@ -68,7 +79,21 @@ These claims are included in the JWT if provided:
 |`aud` *(as array)*|:heavy_check_mark:|
 |`jti`|:heavy_check_mark:|
 |`sub`|:heavy_check_mark:|
-|`sub`|:heavy_check_mark:|
 
+##### Change the JWT claims
 
-Note: Claims are planned to be completely customizable with [Jsonnet](https://jsonnet.org/), even custom claims provided by the introspection endpoint.
+With [Jsonnet](https://jsonnet.org/) you are able to include custom claims
+or synthesize new ones or add static claims.
+
+The default claims already use a [jsonnet template](src/default.jsonnet) to construct the JWT token.
+With help from [jsonnet.org](https://jsonnet.org/learning/tutorial.html) and the default template
+you should be able to change the generated JWT to your requirements.
+
+This filter uses [Top-Level Arguments](https://jsonnet.org/learning/tutorial.html#parameterize-entire-config).
+Basically the filter needs a function which generates the jwt claims. It is called with the introspection json as a parameter.
+In the function you can add all claims you want to add to your jwt token. An example can be found at [src/default.jsonnet](src/default.jsonnet).
+```jsonnet
+function(introspect_json) {
+  // ... put your claims inside here
+}
+```
