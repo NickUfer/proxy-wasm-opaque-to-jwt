@@ -11,11 +11,11 @@ use serde_json::Value;
 use std::str::FromStr;
 use std::string::FromUtf8Error;
 use std::time::Duration;
+use proxy_wasm::main;
 
 mod jwt;
 
-#[no_mangle]
-pub fn _start() {
+main! {{
     proxy_wasm::set_log_level(LogLevel::Trace); // TODO make configurable
     proxy_wasm::set_root_context(|_| -> Box<dyn RootContext> {
         Box::new(AuthRootContext {
@@ -28,7 +28,7 @@ pub fn _start() {
             },
         })
     })
-}
+}}
 
 // Using "raw" config struct copies
 // to decouple configuration to logic
