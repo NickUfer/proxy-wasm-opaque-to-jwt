@@ -188,7 +188,7 @@ impl Context for AuthHttpContext {
 }
 
 impl HttpContext for AuthHttpContext {
-    fn on_http_request_headers(&mut self, _: usize) -> Action {
+    fn on_http_response_headers(&mut self, _: usize, _: bool) -> Action {
         let token: String;
         match self.get_http_request_header("authorization") {
             Some(auth_header) => {
@@ -237,7 +237,7 @@ impl RootContext for AuthRootContext {
     }
 
     fn on_configure(&mut self, _plugin_configuration_size: usize) -> bool {
-        match self.get_configuration() {
+        match self.get_plugin_configuration() {
             Some(config_bytes) => {
                 let cfg: RawConfig = serde_yaml::from_slice(config_bytes.as_slice()).unwrap();
                 if !cfg.jwt.output_header_name.is_empty() {
